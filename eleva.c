@@ -38,7 +38,7 @@ void *elevaNumeros (void *arg){
         args->vetor[i] *= args->vetor[i];   
     }
 
-    if(args->idThread == args->nThreads - 1){
+    if(args->idThread == args->nThreads - 1){ // Caso haja divisão com resto, a última thread lidará com o excedente
         int inicioExtra = inicio + (args->tamanhoVetor / args->nThreads);
         printf("%d \n", inicioExtra);
         for(int i = inicioExtra; i < args->tamanhoVetor; i++){
@@ -55,7 +55,7 @@ int main (int argc, char *argv[]) {
     int N, M, *vetor;
 
     if(argc != 3){
-        printf("Você deve passar o tamanho do vetor e o número threads. A execução foi cancelada.");
+        printf("Você deve passar o tamanho do vetor e o número de threads. A execução foi cancelada.");
         return 1;
     }
 

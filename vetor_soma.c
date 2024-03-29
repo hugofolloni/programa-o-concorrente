@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define MAX 1000 //valor maximo dos elementos do vetor
+#define MAX 1000 // Valor máximo para cada elemento do vetor
 
 int main(int argc, char *argv[]) {
     int N;
@@ -14,12 +14,12 @@ int main(int argc, char *argv[]) {
     }
 
     srand((unsigned)time(NULL));
-    N = atol(argv[1]);
+    N = atoi(argv[1]);
 
     printf("%d\n", N);
 
     for(int i = 0; i < N; i++){
-        float random = (rand() % 1000) / ((float) (rand() % 5) + 1);
+        float random = (rand() % MAX + 1) / ((float) (rand() % 5) + 1);
         soma += random;
         printf("%f ", random);
     }

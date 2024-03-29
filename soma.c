@@ -1,6 +1,7 @@
 // HUGO FOLLONI GUARILHA - 121085854
 
-// Projetar, implementar e avaliar uma versao concorrente para o problema de somar todos os elementos de um vetor de numeros reais. ́
+// Projetar, implementar e avaliar uma versao concorrente para o problema de somar todos os elementos de um vetor de numeros reais.
+
 #include<stdio.h>
 #include<stdlib.h>
 #include<pthread.h>

@@ -2,7 +2,6 @@
 
 // Escreva um programa de M threads, para elevar ao quadrado cada elemento de um vetor de N elementos do tipo inteiro.
 
-
 #include <stdio.h>
 #include <stdlib.h> 
 #include <pthread.h>

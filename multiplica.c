@@ -6,6 +6,7 @@
 #include<stdlib.h>
 #include<errno.h>
 #include <pthread.h>
+#include "timer.h"
 
 typedef struct {
     float *dados;
@@ -149,7 +150,8 @@ sMatriz * multiplicaConcorrente(sMatriz * matriz1, sMatriz * matriz2, int numero
 }
 
 int main(int argc, char*argv[]) {
-    // timer1
+    double inicioExecucao, inicioMultiplicacao, fimMultiplicacao, fimExecucao;
+    GET_TIME(inicioExecucao);
 
     sMatriz * matriz1;
     sMatriz * matriz2;
@@ -166,17 +168,20 @@ int main(int argc, char*argv[]) {
     matriz2 = leMatriz(argv[2]);
 
     sMatriz * concorrente;
-    // timer2
+    GET_TIME(inicioMultiplicacao);
     concorrente = multiplicaConcorrente(matriz1, matriz2, atoi(argv[3]));
-    // timer3
-    printMatriz(concorrente);
+    GET_TIME(fimMultiplicacao)
+    // printMatriz(concorrente);
 
     fwrite(&concorrente->linhas, sizeof(int), 1, descritorArquivo);
     fwrite(&concorrente->colunas, sizeof(int), 1, descritorArquivo);
     fwrite(concorrente->dados, sizeof(float), concorrente->tamanho, descritorArquivo);
     
+    GET_TIME(fimExecucao);
+    printf("Matrix %dx%d\n%d thread(s)\n\n", concorrente->linhas, concorrente->colunas, atoi(argv[3]));
+    printf("Inicialização: %lf\nProcessamento: %lf\nFinalização:   %lf\n", inicioMultiplicacao - inicioExecucao, fimMultiplicacao - inicioMultiplicacao, fimExecucao - fimMultiplicacao);
+
     free(concorrente);
-    // timer 4
 
     // sMatriz * sequencial;
     // sequencial = multiplicaSequencial(matriz1, matriz2);

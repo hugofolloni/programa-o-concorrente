@@ -16,6 +16,10 @@ typedef struct {
 sMatriz * leMatriz (char * arquivo) {
     sMatriz *matriz;
     matriz = (sMatriz*) malloc(sizeof(sMatriz));
+    if(matriz == NULL) {
+        fprintf(stderr, "ERRO--malloc\n");
+        return NULL;
+    }
     FILE * descritorArquivo;
 
     descritorArquivo = fopen(arquivo, "rb");
@@ -25,6 +29,10 @@ sMatriz * leMatriz (char * arquivo) {
     matriz->tamanho = matriz->linhas * matriz->colunas;    
 
     matriz->dados = (float *) malloc(sizeof(float) * matriz->tamanho);
+    if(matriz->dados == NULL) {
+        fprintf(stderr, "ERRO--malloc\n");
+        return NULL;
+    }
     fread(matriz->dados, sizeof(float), matriz->tamanho, descritorArquivo);
 
     return matriz;

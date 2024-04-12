@@ -8,6 +8,9 @@
 #include <pthread.h>
 #include "timer.h"
 
+// #define SEQUENCIAL
+#define CONCORRENTE
+
 typedef struct {
     float *dados;
     int linhas, colunas, tamanho;
@@ -19,8 +22,13 @@ typedef struct {
 } t_Args;
 
 sMatriz * leMatriz (char * arquivo) {
+    // Essa função é responsável por ler o arquivo binário e carregar a matriz no struct sMatriz.
     sMatriz *matriz;
     matriz = (sMatriz*) malloc(sizeof(sMatriz));
+    if(matriz == NULL) {
+      fprintf(stderr, "ERRO--malloc\n");
+      return NULL;
+   }
     FILE * descritorArquivo;
 
     descritorArquivo = fopen(arquivo, "rb");
@@ -30,12 +38,17 @@ sMatriz * leMatriz (char * arquivo) {
     matriz->tamanho = matriz->linhas * matriz->colunas;    
 
     matriz->dados = (float *) malloc(sizeof(float) * matriz->tamanho);
+    if(matriz->dados == NULL) {
+      fprintf(stderr, "ERRO--malloc\n");
+      return NULL;
+   }
     fread(matriz->dados, sizeof(float), matriz->tamanho, descritorArquivo);
 
     return matriz;
 }
 
 void printMatriz(sMatriz * matriz){
+    // Essa função somente é responsável por printar a matriz
     for(int i=0; i<matriz->linhas; i++) { 
         for(int j=0; j<matriz->colunas; j++)
             fprintf(stdout, "%.6f ", matriz->dados[i*matriz->colunas+j]);
@@ -44,9 +57,14 @@ void printMatriz(sMatriz * matriz){
 }
 
 sMatriz * multiplicaSequencial (sMatriz * matriz1, sMatriz * matriz2) {
+    // Essa função realiza os passos sequencias de multiplicação, sem concorrência
     int tamanhoMultiplicacao;
     sMatriz * resposta;
     resposta = (sMatriz*) malloc(sizeof(sMatriz));
+    if(resposta == NULL) {
+        fprintf(stderr, "ERRO--malloc\n");
+        return NULL;
+    }
 
     if(matriz1->colunas != matriz2->linhas){
         printf("Essas matrizes não podem ser multiplicadas por inconsistências de tamanho.\n");
@@ -59,6 +77,10 @@ sMatriz * multiplicaSequencial (sMatriz * matriz1, sMatriz * matriz2) {
     resposta->tamanho = matriz1->linhas * matriz2->colunas;
 
     resposta->dados = (float *) malloc(sizeof(float) * resposta->tamanho);
+    if(resposta->dados == NULL) {
+        fprintf(stderr, "ERRO--malloc\n");
+        return NULL;
+    }
 
     for(int linha = 0; linha < resposta->linhas; linha++){
         for(int coluna = 0; coluna < resposta->colunas; coluna++){
@@ -74,6 +96,7 @@ sMatriz * multiplicaSequencial (sMatriz * matriz1, sMatriz * matriz2) {
 }
 
 void * tarefa(void * arg){
+    // Essa função é a passada para as threads
     t_Args *args = (t_Args *) arg;
 
     for(int i = args->id * args->bloco; i < args->id * args->bloco + args->bloco; i++){
@@ -95,10 +118,16 @@ void * tarefa(void * arg){
 }
 
 sMatriz * multiplicaConcorrente(sMatriz * matriz1, sMatriz * matriz2, int numeroThreads){
+    // Essa função é responsável por separar o workload de cada thread e criá-las
     pthread_t threads[numeroThreads]; 
     t_Args *args; 
     sMatriz * resposta;
     resposta = (sMatriz*) malloc(sizeof(sMatriz));
+    if(resposta == NULL) {
+        fprintf(stderr, "ERRO--malloc\n");
+        return NULL;
+    }
+    
     int tamanhoBloco;
 
     tamanhoBloco = matriz1->linhas * matriz2->colunas / numeroThreads;
@@ -113,9 +142,17 @@ sMatriz * multiplicaConcorrente(sMatriz * matriz1, sMatriz * matriz2, int numero
     resposta->tamanho = matriz1->linhas * matriz2->colunas;
 
     resposta->dados = (float *) malloc(sizeof(float) * resposta->tamanho);
+    if(resposta->dados == NULL) {
+        fprintf(stderr, "ERRO--malloc\n");
+        return NULL;
+    }
 
     for(int i = 0; i < numeroThreads; i++){
         args = malloc(sizeof(t_Args));
+        if(args == NULL) {
+            fprintf(stderr, "ERRO--malloc\n");
+            return NULL;
+        }
         args->id = i;
         args->bloco = tamanhoBloco;
         args->matriz1 = matriz1;
@@ -157,16 +194,27 @@ int main(int argc, char*argv[]) {
     sMatriz * matriz2;
     
     FILE * descritorArquivo;
-    descritorArquivo = fopen(argv[4], "wb");
 
+#ifdef CONCORRENTE
+    descritorArquivo = fopen(argv[4], "wb");
     if(argc != 5){
         printf("Você deve passar o arquivo com as matrizes, o número de threads e o arquivo de saída. A execução foi cancelada.\n");
         return 1;
     }
+#endif
+
+#ifdef SEQUENCIAL
+    descritorArquivo = fopen(argv[3], "wb");
+    if(argc != 4){
+        printf("Você deve passar o arquivo com as matrizes e o arquivo de saída. A execução foi cancelada.\n");
+        return 1;
+    }
+#endif
 
     matriz1 = leMatriz(argv[1]);
     matriz2 = leMatriz(argv[2]);
 
+#ifdef CONCORRENTE
     sMatriz * concorrente;
     GET_TIME(inicioMultiplicacao);
     concorrente = multiplicaConcorrente(matriz1, matriz2, atoi(argv[3]));
@@ -182,16 +230,25 @@ int main(int argc, char*argv[]) {
     printf("Inicialização: %lf\nProcessamento: %lf\nFinalização:   %lf\n", inicioMultiplicacao - inicioExecucao, fimMultiplicacao - inicioMultiplicacao, fimExecucao - fimMultiplicacao);
 
     free(concorrente);
+#endif
 
-    // sMatriz * sequencial;
-    // sequencial = multiplicaSequencial(matriz1, matriz2);
+#ifdef SEQUENCIAL
+    sMatriz * sequencial;
+    GET_TIME(inicioMultiplicacao);
+    sequencial = multiplicaSequencial(matriz1, matriz2);
+    GET_TIME(fimMultiplicacao)
     // printMatriz(sequencial);
 
-    // fwrite(&sequencial->linhas, sizeof(int), 1, descritorArquivo);
-    // fwrite(&sequencial->colunas, sizeof(int), 1, descritorArquivo);
-    // fwrite(sequencial->dados, sizeof(float), sequencial->tamanho, descritorArquivo);
+    fwrite(&sequencial->linhas, sizeof(int), 1, descritorArquivo);
+    fwrite(&sequencial->colunas, sizeof(int), 1, descritorArquivo);
+    fwrite(sequencial->dados, sizeof(float), sequencial->tamanho, descritorArquivo);
 
-    // free(sequencial);
+    GET_TIME(fimExecucao);
+    printf("Matrix %dx%d\nSequencial\n\n", sequencial->linhas, sequencial->colunas);
+    printf("Inicialização: %lf\nProcessamento: %lf\nFinalização:   %lf\n", inicioMultiplicacao - inicioExecucao, fimMultiplicacao - inicioMultiplicacao, fimExecucao - fimMultiplicacao);
+
+    free(sequencial);
+#endif
 
     free(matriz1);
     free(matriz2);

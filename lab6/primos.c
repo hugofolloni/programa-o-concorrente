@@ -47,10 +47,11 @@ void *produtora(void *nome) {
     int num;
 
     while (fread(&num, sizeof(int), 1, file)) {
-        // sem_wait(&sem_full); // Caso buffer esteja cheio, esperar
+        sem_wait(&sem_full); // Caso buffer esteja cheio, esperar
 
         sem_wait(&sem_prod);       // Seção crítica do index do produtor
-        buffer[prod_pointer++] = num;
+        buffer[prod_pointer] = num;
+        prod_pointer = (prod_pointer + 1) % M;;
         sem_post(&sem_prod);    
 
         sem_post(&sem_items);  // Informa que pode ser pego um novo item
@@ -81,11 +82,11 @@ void *consumidora(void *id) {
             break;
         }
 
-        int num = buffer[consumer_pointer++];
+        int num = buffer[consumer_pointer];
+        consumer_pointer = (consumer_pointer + 1) % M;
 
         sem_post(&sem_cons); 
-
-        // sem_post(&sem_full);
+        sem_post(&sem_full);
 
         if (ehPrimo(num)) {
             local++;
